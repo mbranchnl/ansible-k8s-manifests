@@ -1,0 +1,19 @@
+---
+- name: "Clear builddir structure"
+  ansible.builtin.file:
+    state: absent
+    path: "{{ k8s_manifest_builddir }}"
+  changed_when: false
+
+- name: "Create builddir structure"
+  ansible.builtin.file:
+    path: "{{ k8s_manifest_builddir }}"
+    state: directory
+    mode: '0755'
+  changed_when: false
+
+- name: "Check if {{ k8s_manifest_sourcedir }} exists"
+  ansible.builtin.stat:
+    path: "{{ k8s_manifest_sourcedir }}"
+  register: k8s_manifest_sourcedir_check
+  when: k8s_manifest_sourcedir is defined

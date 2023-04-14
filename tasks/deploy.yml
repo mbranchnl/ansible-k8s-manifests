@@ -1,0 +1,20 @@
+---
+- name: Check for manifest files
+  ansible.builtin.find:
+    paths: "{{ k8s_manifest_builddir }}"
+    patterns: '*.yml'
+    recurse: false
+    file_type: any
+  register: single_k8s_manifest_files
+
+- name: "Deploy manifests"
+  kubernetes.core.k8s:
+    host: "{{ k8s_url }}"
+    api_key: "{{ k8s_token | b64decode }}"
+    validate_certs: "{{ k8s_manifest_validate_certs }}"
+    state: present
+    apply: true
+    definition: "{{ lookup('file', manifest) }}"
+  loop: "{{ single_k8s_manifest_files['files'] | map(attribute='path') | list | sort }}"
+  loop_control:
+    loop_var: manifest

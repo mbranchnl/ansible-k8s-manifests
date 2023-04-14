@@ -1,0 +1,8 @@
+---
+k8s_manifest_builddir: "{{ role_path }}/_manifests"
+
+k8s_manifest_global_sourcedir: "{{ k8s_manifest_sourcedir }}/_global"
+
+k8s_manifest_default_value_file: "{{ role_path }}/files/defaults.yml"
+
+k8s_manifest_validate_certs: false

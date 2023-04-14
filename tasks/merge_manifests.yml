@@ -1,0 +1,17 @@
+---
+- name: "Check for manifest files in namespace {{ item | basename }}"
+  ansible.builtin.find:
+    paths: "{{ k8s_manifest_sourcedir }}/{{ item | basename }}"
+    patterns: '*.yml'
+    recurse: false
+    file_type: any
+  register: manifests
+
+- name: "Create single manifest-file in namespace {{ item | basename }}"
+  ansible.builtin.template:
+    src: concatenate.j2
+    dest: "{{ k8s_manifest_builddir }}/{{ item | basename }}.yml"
+    mode: 0644
+  vars:
+    mergable_manifests: "{{ manifests['files'] | map(attribute='path') | list | sort }}"
+  changed_when: false

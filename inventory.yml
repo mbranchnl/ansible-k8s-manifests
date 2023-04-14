@@ -1,0 +1,12 @@
+# Below are all example values
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: "/Users/marijn/.venv/bin/python"
+
+  vars:
+    k8s_url: https://xxx.xxx.xxx.xxx:6443
+    k8s_token: 'ZXlKaGJHY2lPaUpTVXp....lZKLUl6UGFxOUhNV25B' # base64 encoded
+
+    k8s_manifest_sourcedir: "{{ role_path }}/files/testcluster/"

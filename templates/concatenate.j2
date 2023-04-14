@@ -1,0 +1,4 @@
+{% for i in mergable_manifests %}
+{{ lookup('file', i) }}
+
+{% endfor %}

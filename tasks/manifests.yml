@@ -1,0 +1,12 @@
+---
+- name: "Loop over folders in defined manifest folder {{ k8s_manifest_dir }}"
+  ansible.builtin.find:
+    paths: '{{ k8s_manifest_sourcedir }}'
+    file_type: directory
+    excludes: "{{ k8s_manifest_global_sourcedir | basename }}"
+  register: k8s_manifest_registered_folders
+
+- name: "Merge manifests to single manifest file per namespace"
+  ansible.builtin.include_tasks:
+    file: merge_manifests.yml
+  loop: "{{ k8s_manifest_registered_folders | json_query('files[*].path') | list }}"

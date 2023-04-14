@@ -1,0 +1,17 @@
+---
+- name: Deploy Helm Charts
+  kubernetes.core.helm:
+    host: "{{ k8s_url }}"
+    api_key: "{{ k8s_token | b64decode }}"
+    validate_certs: "{{ k8s_manifest_validate_certs }}"
+    create_namespace: true
+    name: "{{ item.key }}"
+    chart_repo_url: '{{ item.value.repo_url }}'
+    chart_version: '{{ item.value.version }}'
+    chart_ref: '{{ item.value.chart_ref }}'
+    release_namespace: '{{ item.value.namespace }}'
+    wait: true
+    wait_timeout: "{{ item.value.wait_timeout | default('15m') }}"
+    values_files:
+      - "{{ item.value.value_file | default(k8s_manifest_default_value_file) }}"
+  loop: '{{ lookup("dict", k8s_manifest_helm_charts, wantlist=True) }}'

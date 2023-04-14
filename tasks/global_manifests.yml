@@ -1,0 +1,19 @@
+---
+- name: "Find manifests for global purpose with correct extension (yml) in {{ k8s_manifest_global_sourcedir }}"
+  ansible.builtin.find:
+    paths: "{{ k8s_manifest_global_sourcedir }}"
+    patterns: '*.yml'
+    recurse: false
+  register: gathered_global_manifests
+
+- name: "Deploy global manifests"
+  kubernetes.core.k8s:
+    host: "{{ k8s_url }}"
+    api_key: "{{ k8s_token | b64decode }}"
+    validate_certs: "{{ k8s_manifest_validate_certs }}"
+    state: present
+    apply: true
+    definition: "{{ lookup('file', manifest_global) }}"
+  loop: "{{ gathered_global_manifests | json_query('files[*].path') | sort }}"
+  loop_control:
+    loop_var: manifest_global
