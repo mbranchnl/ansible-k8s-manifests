@@ -12,6 +12,12 @@
     mode: '0755'
   changed_when: false
 
+- name: "Check if {{ k8s_manifest_global_sourcedir }} exists"
+  ansible.builtin.stat:
+    path: "{{ k8s_manifest_global_sourcedir }}"
+  register: k8s_manifest_global_sourcedir_check
+  when: k8s_manifest_global_sourcedir is defined
+
 - name: "Check if {{ k8s_manifest_sourcedir }} exists"
   ansible.builtin.stat:
     path: "{{ k8s_manifest_sourcedir }}"

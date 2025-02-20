@@ -1,5 +1,23 @@
 ---
-- name: Deploy Helm Charts
+- name: Deploy Helm Charts - based on template (.j2 extension)
+  kubernetes.core.helm:
+    host: "{{ k8s_url }}"
+    api_key: "{{ k8s_token | b64decode }}"
+    validate_certs: "{{ k8s_manifest_validate_certs }}"
+    create_namespace: "{{ item.value.create_namespace | default('false') }}"
+    name: "{{ item.key }}"
+    chart_repo_url: '{{ item.value.repo_url }}'
+    chart_version: '{{ item.value.version }}'
+    chart_ref: '{{ item.value.chart_ref }}'
+    release_namespace: '{{ item.value.namespace }}'
+    force: "{{ item.value.force | default('false') }}"
+    wait: true
+    wait_timeout: "{{ item.value.wait_timeout | default('15m') }}"
+    values: "{{ lookup ('template', item.value.value_file) | from_yaml }}"
+  when: "'j2' in item.value.value_file"
+  loop: '{{ lookup("dict", k8s_manifest_helm_charts, wantlist=True) }}'
+
+- name: Deploy Helm Charts - based on file (.yml extension )
   kubernetes.core.helm:
     host: "{{ k8s_url }}"
     api_key: "{{ k8s_token | b64decode }}"
@@ -10,8 +28,9 @@
     chart_version: '{{ item.value.version }}'
     chart_ref: '{{ item.value.chart_ref }}'
     release_namespace: '{{ item.value.namespace }}'
+    force: "{{ item.value.force | default('false') }}"
     wait: true
     wait_timeout: "{{ item.value.wait_timeout | default('15m') }}"
-    values_files:
-      - "{{ item.value.value_file | default(k8s_manifest_default_value_file) }}"
+    values: "{{ lookup ('file', item.value.value_file) | from_yaml }}"
+  when: "'j2' not in item.value.value_file"
   loop: '{{ lookup("dict", k8s_manifest_helm_charts, wantlist=True) }}'

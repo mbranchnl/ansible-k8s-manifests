@@ -1,7 +1,48 @@
 ---
+- name: "Create global builddir structure"
+  ansible.builtin.file:
+    path: "{{ k8s_manifest_builddir }}/global"
+    state: directory
+    mode: '0755'
+  changed_when: false
+
+- name: "Check for template files in global {{ k8s_manifest_global_sourcedir }}"
+  ansible.builtin.find:
+    paths: "{{ k8s_manifest_global_sourcedir }}"
+    patterns: '*.j2'
+    recurse: false
+    file_type: any
+  register: global_manifests_jinja
+
+- name: "Use template engine for files found global_sourcedir with .j2 extension"
+  ansible.builtin.template:
+    src: "{{ file_item }}"
+    dest: "{{ k8s_manifest_builddir }}/global/{{ file_item | basename | regex_replace('.j2', '') }}"
+    mode: 0644
+  loop: "{{ global_manifests_jinja | json_query('files[*].path') | list }}"
+  loop_control:
+    loop_var: file_item
+  when: (global_manifests_jinja.matched | int) > 0
+  changed_when: false
+
 - name: "Find manifests for global purpose with correct extension (yml) in {{ k8s_manifest_global_sourcedir }}"
   ansible.builtin.find:
     paths: "{{ k8s_manifest_global_sourcedir }}"
+    patterns: '*.yml'
+    recurse: false
+  register: gathered_global_manifests
+
+- name: Copy global manifests to global builddir
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ k8s_manifest_builddir }}/global/"
+    mode: 0755
+  loop: "{{ gathered_global_manifests | json_query('files[*].path') | sort }}"
+  changed_when: false
+
+- name: "Find manifests in global builddir"
+  ansible.builtin.find:
+    paths: "{{ k8s_manifest_builddir }}/global/"
     patterns: '*.yml'
     recurse: false
   register: gathered_global_manifests

@@ -10,3 +10,5 @@
   ansible.builtin.include_tasks:
     file: merge_manifests.yml
   loop: "{{ k8s_manifest_registered_folders | json_query('files[*].path') | list }}"
+  loop_control:
+    loop_var: namespace_item

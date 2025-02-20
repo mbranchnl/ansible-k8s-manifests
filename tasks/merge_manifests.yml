@@ -1,16 +1,35 @@
 ---
-- name: "Check for manifest files in namespace {{ item | basename }}"
+- name: "Check for template files in namespace {{ namespace_item | basename }}"
   ansible.builtin.find:
-    paths: "{{ k8s_manifest_sourcedir }}/{{ item | basename }}"
+    paths: "{{ k8s_manifest_sourcedir }}/{{ namespace_item | basename }}"
+    patterns: '*.j2'
+    recurse: false
+    file_type: any
+  register: manifests_jinja
+
+- name: "Use template engine for files found in namespace {{ namespace_item | basename }} with .j2 extension"
+  ansible.builtin.template:
+    src: "{{ file_item }}"
+    dest: "{{ k8s_manifest_builddir }}/{{ namespace_item | basename }}/{{ file_item | basename | regex_replace('.j2', '') }}"
+    mode: 0644
+  loop: "{{ manifests_jinja | json_query('files[*].path') | list }}"
+  loop_control:
+    loop_var: file_item
+  when: (manifests_jinja.matched | int) > 0
+  changed_when: false
+
+- name: "Check for manifest files in namespace {{ namespace_item | basename }}"
+  ansible.builtin.find:
+    paths: "{{ k8s_manifest_sourcedir }}/{{ namespace_item | basename }}"
     patterns: '*.yml'
     recurse: false
     file_type: any
   register: manifests
 
-- name: "Create single manifest-file in namespace {{ item | basename }}"
+- name: "Create single manifest-file in namespace {{ namespace_item | basename }}"
   ansible.builtin.template:
     src: concatenate.j2
-    dest: "{{ k8s_manifest_builddir }}/{{ item | basename }}.yml"
+    dest: "{{ k8s_manifest_builddir }}/{{ namespace_item | basename }}.yml"
     mode: 0644
   vars:
     mergable_manifests: "{{ manifests['files'] | map(attribute='path') | list | sort }}"

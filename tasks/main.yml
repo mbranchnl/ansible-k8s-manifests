@@ -2,24 +2,27 @@
 - name: Pre-flight
   ansible.builtin.include_tasks: pre_flight.yml
 
-- name: Deploy helm charts
-  ansible.builtin.include_tasks: helm_charts.yml
-  when: k8s_manifest_helm_charts is defined
-
 - name: Build and deploy global manifests
   ansible.builtin.include_tasks: global_manifests.yml
   when:
-    - k8s_manifest_sourcedir is defined
-    - k8s_manifest_sourcedir_check.stat.isdir
+    - k8s_manifest_global_sourcedir is defined
+    - k8s_manifest_global_sourcedir_check.stat.exists
+    - k8s_manifest_global_sourcedir_check.stat.isdir
+
+- name: Deploy helm charts
+  ansible.builtin.include_tasks: helm_charts.yml
+  when: k8s_manifest_helm_charts is defined
 
 - name: Build and concatenate manifest files
   ansible.builtin.include_tasks: manifests.yml
   when:
     - k8s_manifest_sourcedir is defined
+    - k8s_manifest_sourcedir_check.stat.exists
     - k8s_manifest_sourcedir_check.stat.isdir
 
 - name: Deploy manifests
   ansible.builtin.include_tasks: deploy.yml
   when:
     - k8s_manifest_sourcedir is defined
+    - k8s_manifest_sourcedir_check.stat.exists
     - k8s_manifest_sourcedir_check.stat.isdir
